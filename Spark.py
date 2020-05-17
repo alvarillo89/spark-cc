@@ -39,7 +39,7 @@ def select_columns(sc):
         "PSSM_central_0_A", "PSSM_r1_1_W", "PSSM_central_-1_V", "class")
 
     # Write new csv:
-    df.write.csv('./filteredC.small.training')
+    df.write.csv('./filteredC.small.training', header=True)
 
 
 if __name__ == "__main__":
@@ -49,7 +49,5 @@ if __name__ == "__main__":
 
 # Notas
 # model.summary() -> collect
-# Comandos para copiar el fichero de datos con hdfs:
-# hdfs dfs -cp /user/datasets/ecbdl14/ECBDL14_IR2.header .
-# hdfs dfs -cp /user/datasets/ecbdl14/ECBDL14_IR2.data .
-# /opt/spark-2.2.0/bin/spark-submit --master spark://hadoop-master:7077 --total-executor-cores 5 --executor-memory 1g wordcount.py
+# /opt/spark-2.2.0/bin/spark-submit --master spark://hadoop-master:7077 --total-executor-cores 5 --executor-memory 1g spark-cc/Spark.py
+# hdfs dfs -getmerge filteredC.small.training/ ./filteredC.small.training
