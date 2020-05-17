@@ -19,7 +19,7 @@ def select_columns(sc):
     df.show()
 
 
-def main():
+if __name__ == "__main__":
     sc = spark_init()
     select_columns(sc)
 
