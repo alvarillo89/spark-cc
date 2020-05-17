@@ -18,7 +18,7 @@ def select_columns(sc):
     spark = SQLContext(sc)
     df = spark.read.csv(
         '/user/datasets/ecbdl14/ECBDL14_IR2.data', header=False, inferSchema=True)
-    df.show()
+    df.printSchema()
 
 
 if __name__ == "__main__":
@@ -27,8 +27,7 @@ if __name__ == "__main__":
 
 
 # Notas
-# 5 o 2 cores -> 1gb
-# lr -> collect sumary
+# model.summary() -> collect
 # Comandos para copiar el fichero de datos con hdfs:
 # hdfs dfs -cp /user/datasets/ecbdl14/ECBDL14_IR2.header .
 # hdfs dfs -cp /user/datasets/ecbdl14/ECBDL14_IR2.data .
