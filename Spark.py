@@ -21,7 +21,7 @@ def select_columns(sc):
 
 
 if __name__ == "__main__":
-    sc = spark_init(sc)
+    sc = spark_init()
     select_columns(sc)
 
 
