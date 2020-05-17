@@ -1,4 +1,4 @@
-from pyspark import SparkContext, SparkConf
+from pyspark import SparkContext, SparkConf, SQLContext
 
 
 def spark_init():
@@ -15,12 +15,13 @@ def select_columns(sc):
     Keywords arguments:
     sc -- Spark Context
     """
-    df = sc.read.csv('/user/datasets/ecbdl14/ECBDL14_IR2.data', header=True)
+    spark = SQLContext(sc)
+    df = spark.read.csv('/user/datasets/ecbdl14/ECBDL14_IR2.data', header=True)
     df.show()
 
 
 if __name__ == "__main__":
-    sc = spark_init()
+    sc = spark_init(sc)
     select_columns(sc)
 
 
@@ -30,3 +31,4 @@ if __name__ == "__main__":
 # Comandos para copiar el fichero de datos con hdfs:
 # hdfs dfs -cp /user/datasets/ecbdl14/ECBDL14_IR2.header .
 # hdfs dfs -cp /user/datasets/ecbdl14/ECBDL14_IR2.data .
+# /opt/spark-2.2.0/bin/spark-submit --master spark://hadoop-master:7077 --total-executor-cores 5 --executor-memory 1g wordcount.py
