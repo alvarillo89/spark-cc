@@ -31,7 +31,7 @@ def select_columns(sc):
 
     # Set headers names:
     for i, colname in enumerate(df.columns):
-        df.withColumnRenamed(colname, headers[i])
+        df = df.withColumnRenamed(colname, headers[i])
 
     df.printSchema()
 
