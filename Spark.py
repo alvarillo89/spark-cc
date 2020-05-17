@@ -30,9 +30,8 @@ def select_columns(sc):
         '/user/datasets/ecbdl14/ECBDL14_IR2.data', header=False, inferSchema=True)
 
     # Set headers names:
-    old_schema = df.schema
-    for old, new in zip(old_schema.fields, headers):
-        df.withColumnRenamed(old, new)
+    for i, colname in enumerate(df.columns):
+        df.withColumnRenamed(colname, headers[i])
 
     df.printSchema()
 
