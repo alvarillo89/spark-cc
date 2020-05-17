@@ -16,18 +16,25 @@ def select_columns(sc):
     sc -- Spark Context
     """
     # headers = headers.filter(lambda line: "@inputs" in line)
+    # Get Headers name:
     headers = sc.textFile(
         "/user/datasets/ecbdl14/ECBDL14_IR2.header").collect()
     headers = list(filter(lambda x: "@inputs" in x, headers))[0]
     headers = headers.replace(",", "").strip().split()
     del headers[0]  # Remove "@input"
     headers.append("class")
-    print(headers)
 
-    spark = SQLContext(sc)
-    df = spark.read.csv(
+    # Read data:
+    sqlc = SQLContext(sc)
+    df = sqlc.read.csv(
         '/user/datasets/ecbdl14/ECBDL14_IR2.data', header=False, inferSchema=True)
-    print(len(df.columns))
+
+    # Set headers names:
+    old_schema = df.schema
+    for old, new in zip(old_schema.fields, headers):
+        df.withColumnRenamed(old, new)
+
+    df.printSchema()
 
 
 if __name__ == "__main__":
