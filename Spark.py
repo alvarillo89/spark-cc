@@ -15,10 +15,18 @@ def select_columns(sc):
     Keywords arguments:
     sc -- Spark Context
     """
-    spark = SQLContext(sc)
-    df = spark.read.csv(
-        '/user/datasets/ecbdl14/ECBDL14_IR2.data', header=False, inferSchema=True)
-    df.printSchema()
+
+    headers = sc.textFile("/user/datasets/ecbdl14/ECBDL14_IR2.header")
+    headers = headers.filter(lambda line: "@inputs" in line)
+    headers = headers.map(
+        lambda line: line.replace(",", " ").strip().split()).collect()
+
+    print(headers, len(headers))
+
+    #    spark = SQLContext(sc)
+    # df = spark.read.csv(
+    #    '/user/datasets/ecbdl14/ECBDL14_IR2.data', header = False, inferSchema = True)
+    # df.printSchema()
 
 
 if __name__ == "__main__":
