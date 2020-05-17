@@ -16,7 +16,8 @@ def select_columns(sc):
     sc -- Spark Context
     """
     spark = SQLContext(sc)
-    df = spark.read.csv('/user/datasets/ecbdl14/ECBDL14_IR2.data', header=True)
+    df = spark.read.csv(
+        '/user/datasets/ecbdl14/ECBDL14_IR2.data', header=False, inferSchema=True)
     df.show()
 
 
