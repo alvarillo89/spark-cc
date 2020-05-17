@@ -34,7 +34,7 @@ def select_columns(sc):
         df = df.withColumnRenamed(colname, headers[i])
 
     # Get the assigned columns:
-    df = sqlc.select(
+    df = df.select(
         "PSSM_r1_1_K", "PSSM_r2_-1_R", "PSSM_central_2_D",
         "PSSM_central_0_A", "PSSM_r1_1_W", "PSSM_central_-1_V")
 
