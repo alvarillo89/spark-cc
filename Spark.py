@@ -36,9 +36,10 @@ def select_columns(sc):
     # Get the assigned columns:
     df = df.select(
         "PSSM_r1_1_K", "PSSM_r2_-1_R", "PSSM_central_2_D",
-        "PSSM_central_0_A", "PSSM_r1_1_W", "PSSM_central_-1_V")
+        "PSSM_central_0_A", "PSSM_r1_1_W", "PSSM_central_-1_V", "class")
 
-    df.show()
+    # Write new csv:
+    df.write.csv('./filteredC.small.training')
 
 
 if __name__ == "__main__":
