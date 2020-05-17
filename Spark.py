@@ -33,7 +33,12 @@ def select_columns(sc):
     for i, colname in enumerate(df.columns):
         df = df.withColumnRenamed(colname, headers[i])
 
-    df.printSchema()
+    # Get the assigned columns:
+    df = sqlc.select(
+        "PSSM_r1_1_K", "PSSM_r2_-1_R", "PSSM_central_2_D",
+        "PSSM_central_0_A", "PSSM_r1_1_W", "PSSM_central_-1_V")
+
+    df.show()
 
 
 if __name__ == "__main__":
