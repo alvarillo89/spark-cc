@@ -15,7 +15,7 @@ def select_columns(sc):
     Keywords arguments:
     sc -- Spark Context
     """
-    # headers = headers.filter(lambda line: "@inputs" in line)
+
     # Get Headers name:
     headers = sc.textFile(
         "/user/datasets/ecbdl14/ECBDL14_IR2.header").collect()
@@ -40,6 +40,14 @@ def select_columns(sc):
 
     # Write new csv:
     df.write.csv('./filteredC.small.training', header=True)
+
+
+def load_data(sc):
+    """ Carga el csv previamente creado con la función select_columns() """
+    sqlc = SQLContext(sc)
+    df = sqlc.read.csv('./filteredC.small.training/',
+                       header=True, inferSchema=True)
+    return df
 
 
 if __name__ == "__main__":
