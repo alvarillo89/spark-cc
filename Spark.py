@@ -10,9 +10,8 @@ from pyspark.sql.types import FloatType, IntegerType
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.feature import StandardScaler
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
-from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, TrainValidationSplit
+from pyspark.ml.tuning import ParamGridBuilder, TrainValidationSplit
 from pyspark.ml.classification import LogisticRegression, RandomForestClassifier, LinearSVC
-from pyspark.ml.classification import RandomForestClassificationModel
 
 ###################################################################################################
 
@@ -86,7 +85,7 @@ def load_data(sc):
 
 def preprocess(df, should_undersample, scaler=None):
     """ Escala los datos y balancea usando Random Undersample (RUS) """
-    # Agrupar las caracteristicas para poder escalarlas:
+    # Agrupar las caracteristicas para poder usarlas en la MLlib:
     assembler = VectorAssembler(inputCols=[
         "PSSM_r1_1_K", "PSSM_r2_-1_R", "PSSM_central_2_D",
         "PSSM_central_0_A", "PSSM_r1_1_W", "PSSM_central_-1_V"
@@ -133,32 +132,10 @@ def train_test_split(data, test_size):
 ###################################################################################################
 
 
-def crossvalidate(estimator, train, grid, file_name):
-    """ Realiza la validación cruzada de "estimator" con los datos de "train", 
-    explorando la rejilla de hiperparámetros presente en "grid". Muestra los 
-    resultados para cada combinación y guarda el mejor modelo en un archivo 
-    con nombre "file_name"
-    """
-    crossval = CrossValidator(estimator=estimator,
-                              estimatorParamMaps=grid,
-                              evaluator=BinaryClassificationEvaluator(
-                                  labelCol="class"),
-                              numFolds=3,
-                              seed=89)
-
-    model = crossval.fit(train)
-    model.bestModel.save(file_name)
-    for i, item in enumerate(model.getEstimatorParamMaps()):
-        grid = ["%s: %s" % (p.name, str(v)) for p, v in item.items()]
-        print(grid, model.getEvaluator().getMetricName(),
-              model.avgMetrics[i])
-
-###################################################################################################
-
-
-def validate(estimator, train, grid, file_name):
-    """ Elige los hiperparámetros de grid utilizando el 20% de los datos como
-    partición de validación. Guarda el mejor modelo en "file_name"
+def validate(estimator, train, grid):
+    """ Elige los hiperparámetros de "estimator" a partir de "grid" y utilizando el 
+    20% de los datos de "train" como partición de validación. Como métrica de 
+    comparación, utiliza AUC.
     """
     tvs = TrainValidationSplit(estimator=estimator,
                                estimatorParamMaps=grid,
@@ -168,7 +145,6 @@ def validate(estimator, train, grid, file_name):
                                seed=89)
 
     model = tvs.fit(train)
-    model.bestModel.save(file_name)
     for i, item in enumerate(model.getEstimatorParamMaps()):
         grid = ["%s: %s" % (p.name, str(v)) for p, v in item.items()]
         print(grid, model.getEvaluator().getMetricName(),
@@ -178,8 +154,8 @@ def validate(estimator, train, grid, file_name):
 
 
 def train_logistic_regresion(train):
-    """ Entrena un modelo de regresión logística con validación cruzada
-    y varios hiperparámetros.
+    """ Entrena un modelo de regresión logística probando varios hiperparámetros en
+    un partición de validación 
     """
     lr = LogisticRegression(featuresCol="scaled_features",
                             labelCol="class", standardization=False)
@@ -189,32 +165,31 @@ def train_logistic_regresion(train):
         .addGrid(lr.maxIter, [5, 10, 15]) \
         .build()
 
-    crossvalidate(estimator=lr, train=train,
-                  grid=paramGrid, file_name='lr.model')
+    validate(estimator=lr, train=train, grid=paramGrid)
 
 ###################################################################################################
 
 
 def train_random_forest(train):
-    """ Entrena un modelo de random forest con validación cruzada
-    y varios hiperparámetros.
+    """ Entrena un modelo de Random Forest probando varios hiperparámetros en
+    un partición de validación 
     """
     rf = RandomForestClassifier(
         featuresCol="features", labelCol="class", seed=89)
 
     paramGrid = ParamGridBuilder() \
-        .addGrid(rf.numTrees, [10, 20]) \
+        .addGrid(rf.numTrees, [5, 10, 15, 20]) \
         .addGrid(rf.impurity, ['entropy', 'gini']) \
         .build()
 
-    validate(estimator=rf, train=train, grid=paramGrid, file_name='rf.model')
+    validate(estimator=rf, train=train, grid=paramGrid)
 
 ###################################################################################################
 
 
 def train_SVM(train):
-    """ Entrena un modelo de SVM Lineal con validación cruzada
-    y varios hiperparámetros.
+    """ Entrena un modelo de SVM Lineal probando varios hiperparámetros en
+    un partición de validación 
     """
     svm = LinearSVC(featuresCol="scaled_features",
                     labelCol="class", standardization=False)
@@ -224,7 +199,7 @@ def train_SVM(train):
         .addGrid(svm.maxIter, [5, 10, 15]) \
         .build()
 
-    validate(estimator=svm, train=train, grid=paramGrid, file_name='svm.model')
+    validate(estimator=svm, train=train, grid=paramGrid)
 
 ###################################################################################################
 
@@ -239,19 +214,19 @@ if __name__ == "__main__":
     train, scaler = preprocess(train, should_undersample=True)
     test, _ = preprocess(test, should_undersample=False, scaler=scaler)
 
-    # Descomentar para volver a entrenar:
+    # Descomentar para ver la elección de hiperparámetros:
     # train_logistic_regresion(train)
     # train_random_forest(train)
     # train_SVM(train)
 
     # Test:
-    model = RandomForestClassificationModel.load('./rf.model/')
+    # Primero entrenamos el mejor modelo con todos los datos de
+    # train (sin reservar nada para validar):
+    rf = RandomForestClassifier(
+        featuresCol="features", labelCol="class", numTrees=15, impurity='gini', seed=89)
+    model = rf.fit(train)
     evaluator = BinaryClassificationEvaluator()
     test = test.withColumnRenamed('class', 'label')
     evaluation = evaluator.evaluate(model.transform(test))
     print("[TEST] Area bajo la curva ROC:", evaluation)
-
-
-# /opt/spark-2.2.0/bin/spark-submit --master spark://hadoop-master:7077 --total-executor-cores 5 --executor-memory 1g spark-cc/Spark.py
-# ('[TEST] Area bajo la curva ROC:', 0.5394076586203171)
-
+    # ('[TEST] Area bajo la curva ROC:', 0.5391668462877764)
